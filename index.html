@@ -18,6 +18,7 @@
     button {
       padding: 10px 14px;
       margin-right: 8px;
+      margin-top: 6px;
     }
 
     #video {
@@ -34,6 +35,11 @@
       height: 160px;
       font-family: monospace;
       margin-top: 8px;
+
+
+      user-select: text;
+      -webkit-user-select: text;
+      -webkit-touch-callout: default;
     }
 
     #img {
@@ -47,15 +53,16 @@
     #download {
       display: none;
       margin-top: 6px;
+      display: inline-block;
+    }
+
+    .box {
+      max-width: 420px;
     }
 
     #status {
       margin-top: 10px;
       white-space: pre-wrap;
-    }
-
-    .box {
-      max-width: 420px;
     }
   </style>
 </head>
@@ -72,4 +79,25 @@
 
   <p id="status">Ready.</p>
 
-  <h3>QR content (RAW)</h3
+  <h3>QR content</h3>
+  <textarea
+    id="raw"
+    placeholder="Scanned QR text will appear here or paste manually"
+  ></textarea>
+
+  <button id="btnDecode">Decode image from text</button>
+
+  <img id="img" alt="Decoded image" />
+  <br>
+  <a id="download" download="photo.avif">Download image</a>
+</div>
+
+<script src="./scanner.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js');
+  }
+</script>
+
+</body>
+</html>
