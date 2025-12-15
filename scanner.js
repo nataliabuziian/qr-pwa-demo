@@ -15,9 +15,8 @@ function setStatus(msg) {
   statusEl.textContent = msg;
 }
 
-function looksLikeBase64(text) {
-  if (!text || text.length < 100) return false;
-  return /^[A-Za-z0-9+/=\s]+$/.test(text);
+function isLikelyBase64(text) {
+  return /^[A-Za-z0-9+/=\s]+$/.test(text) && text.length > 200;
 }
 
 function base64ToBlob(base64, mime) {
@@ -31,8 +30,84 @@ function base64ToBlob(base64, mime) {
 }
 
 function decodeImageFromText(text) {
-  const value = text.trim();
+  if (!isLikelyBase64(text)) {
+    setStatus('❌ This text does not look like base64 image data.');
+    return;
+  }
 
-  if (!looksLikeBase64(value)) {
-    setStatus('❌ Text is not base64 image data');
-    ret
+  try {
+    const blob = base64ToBlob(text, 'image/avif');
+    const url = URL.createObjectURL(blob);
+
+    imgEl.src = url;
+    imgEl.style.display = 'block';
+
+    downloadEl.href = url;
+    downloadEl.style.display = 'inline';
+
+    setStatus(`✅ Image decoded
+Bytes: ${blob.size}
+Type: ${blob.type}`);
+  } catch (e) {
+    setStatus('❌ Decode error: ' + e.message);
+  }
+}
+
+async function startScan() {
+  if (!('BarcodeDetector' in window)) {
+    setStatus('❌ BarcodeDetector not supported in this browser.');
+    return;
+  }
+
+  const detector = new BarcodeDetector({ formats: ['qr_code'] });
+
+  stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'environment' },
+    audio: false
+  });
+
+  video.srcObject = stream;
+  await video.play();
+
+  btnStart.disabled = true;
+  btnStop.disabled = false;
+
+  setStatus('📷 Scanning...');
+
+  const loop = async () => {
+    try {
+      const codes = await detector.detect(video);
+      if (codes.length > 0) {
+        const text = codes[0].rawValue || '';
+        rawEl.value = text;
+        setStatus(`✅ QR scanned
+Characters: ${text.length}`);
+        stopScan();
+        return;
+      }
+    } catch (e) {
+      setStatus('❌ Scan error');
+    }
+    rafId = requestAnimationFrame(loop);
+  };
+
+  rafId = requestAnimationFrame(loop);
+}
+
+function stopScan() {
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = null;
+
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+
+  video.srcObject = null;
+  btnStart.disabled = false;
+  btnStop.disabled = true;
+}
+
+btnStart.onclick = startScan;
+btnStop.onclick = stopScan;
+btnDecode.onclick = () => decodeImageFromText(rawEl.value.trim());
