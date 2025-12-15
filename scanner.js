@@ -1,109 +1,51 @@
-// This version accepts BOTH:
-// 1) Plain base64 (your case)
-// 2) JSON parts: {id, part, total, data}
-
 const video = document.getElementById('video');
 const statusEl = document.getElementById('status');
+const qrTextEl = document.getElementById('qrText');
+const metaEl = document.getElementById('meta');
 const imgEl = document.getElementById('img');
-const resultEl = document.getElementById('result');
 const downloadEl = document.getElementById('download');
 
 const btnStart = document.getElementById('btnStart');
 const btnStop = document.getElementById('btnStop');
-const btnDecode = document.getElementById('btnDecode');
+const btnTryDecode = document.getElementById('btnTryDecode');
+const btnDecodePaste = document.getElementById('btnDecodePaste');
 const paste = document.getElementById('paste');
 
 let stream = null;
 let rafId = null;
-
-// For JSON multipart mode
-const partsStore = new Map(); // key: id -> {total, parts: Map(partNo->data)}
+let lastText = '';
 
 function setStatus(msg) {
   statusEl.textContent = msg;
 }
 
-function isLikelyBase64(s) {
-  // loose check (base64 may contain + / =)
-  if (!s || s.length < 20) return false;
-  return /^[A-Za-z0-9+/=\s]+$/.test(s);
+function showRawText(text) {
+  lastText = text;
+  qrTextEl.value = text;
+  metaEl.textContent = `Characters: ${text.length}`;
 }
 
-function tryParseJson(text) {
-  try { return JSON.parse(text); } catch { return null; }
-}
+function tryDecodeBase64(text) {
+  try {
+    const clean = text.replace(/\s+/g, '');
+    const bin = atob(clean);
+    const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+    const blob = new Blob([bytes], { type: 'image/avif' });
 
-function base64ToBlob(base64, mime) {
-  const clean = base64.replace(/\s+/g, '');
-  const bin = atob(clean);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return new Blob([bytes], { type: mime });
-}
+    const url = URL.createObjectURL(blob);
+    imgEl.src = url;
+    downloadEl.href = url;
+    downloadEl.style.display = 'inline';
 
-function showImageFromBase64(base64) {
-  // Your data is AVIF
-  const blob = base64ToBlob(base64, 'image/avif');
-  const url = URL.createObjectURL(blob);
-
-  imgEl.src = url;
-  imgEl.alt = 'Decoded image';
-
-  downloadEl.href = url;
-  downloadEl.style.display = 'inline';
-  downloadEl.download = 'photo.avif';
-
-  setStatus(`✅ Decoded image\nBytes: ${blob.size}\nType: ${blob.type}`);
-}
-
-function handlePayload(rawText) {
-  const text = (rawText || '').trim();
-
-  // 1) If JSON - store part(s)
-  const obj = tryParseJson(text);
-  if (obj && obj.data && obj.part && obj.total && obj.id) {
-    const id = String(obj.id);
-    const part = Number(obj.part);
-    const total = Number(obj.total);
-
-    if (!partsStore.has(id)) {
-      partsStore.set(id, { total, parts: new Map() });
-    }
-    const entry = partsStore.get(id);
-    entry.total = total;
-    entry.parts.set(part, String(obj.data));
-
-    setStatus(`📦 Received part ${part}/${total} for id=${id}`);
-
-    if (entry.parts.size === total) {
-      // assemble in order
-      let full = '';
-      for (let p = 1; p <= total; p++) {
-        if (!entry.parts.has(p)) {
-          setStatus(`❌ Missing part ${p}/${total}`);
-          return;
-        }
-        full += entry.parts.get(p);
-      }
-      setStatus(`✅ All parts received. Decoding...`);
-      showImageFromBase64(full);
-    }
-    return;
+    setStatus(`✅ Decoded as image\nBytes: ${blob.size}`);
+  } catch {
+    setStatus('❌ Not valid base64 image (this is OK)');
   }
-
-  // 2) Otherwise treat as plain base64
-  if (isLikelyBase64(text)) {
-    setStatus(`📦 Received plain base64 (${text.length} chars). Decoding...`);
-    showImageFromBase64(text);
-    return;
-  }
-
-  setStatus(`❌ Unknown QR content.\nFirst 80 chars:\n${text.slice(0, 80)}`);
 }
 
 async function startScan() {
   if (!('BarcodeDetector' in window)) {
-    setStatus('❌ BarcodeDetector API not supported in this browser.\nUse the paste fallback.');
+    setStatus('❌ BarcodeDetector not supported. Use paste fallback.');
     return;
   }
 
@@ -120,27 +62,21 @@ async function startScan() {
   btnStart.disabled = true;
   btnStop.disabled = false;
 
-  setStatus('📷 Camera started. Point at the QR.');
+  setStatus('📷 Scanning…');
 
-  const scanLoop = async () => {
-    try {
-      const barcodes = await detector.detect(video);
-      if (barcodes && barcodes.length > 0) {
-        const value = barcodes[0].rawValue || '';
-        if (value) {
-          // stop automatically after first success
-          await stopScan();
-          handlePayload(value);
-          return;
-        }
-      }
-    } catch (e) {
-      setStatus('❌ Scan error: ' + (e?.message || e));
+  const loop = async () => {
+    const codes = await detector.detect(video);
+    if (codes.length > 0) {
+      await stopScan();
+      const text = codes[0].rawValue || '';
+      showRawText(text);
+      setStatus('✅ QR scanned');
+      return;
     }
-    rafId = requestAnimationFrame(scanLoop);
+    rafId = requestAnimationFrame(loop);
   };
 
-  rafId = requestAnimationFrame(scanLoop);
+  rafId = requestAnimationFrame(loop);
 }
 
 async function stopScan() {
@@ -158,12 +94,15 @@ async function stopScan() {
 
   btnStart.disabled = false;
   btnStop.disabled = true;
-  setStatus('Stopped.');
 }
 
-btnStart.addEventListener('click', () => startScan());
-btnStop.addEventListener('click', () => stopScan());
+btnStart.onclick = startScan;
+btnStop.onclick = stopScan;
 
-btnDecode.addEventListener('click', () => {
-  handlePayload(paste.value);
-});
+btnTryDecode.onclick = () => {
+  if (lastText) tryDecodeBase64(lastText);
+};
+
+btnDecodePaste.onclick = () => {
+  showRawText(paste.value);
+};
