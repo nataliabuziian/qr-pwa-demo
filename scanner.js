@@ -15,11 +15,9 @@ function setStatus(msg) {
   statusEl.textContent = msg;
 }
 
-/* 🔑 ГЛАВНЫЙ ФИКС */
+// чистим ВСЁ лишнее (важно для плотных QR)
 function normalizeBase64(text) {
-  return text
-    .replace(/[^A-Za-z0-9+/=]/g, '')  // ❗ УБИРАЕМ ВЕСЬ МУСОР
-    .trim();
+  return text.replace(/[^A-Za-z0-9+/=]/g, '').trim();
 }
 
 function base64ToBlob(base64, mime) {
@@ -75,7 +73,6 @@ async function startScan() {
 
   btnStart.disabled = true;
   btnStop.disabled = false;
-
   setStatus('📷 Scanning…');
 
   const loop = async () => {
@@ -84,12 +81,11 @@ async function startScan() {
       if (codes.length > 0) {
         const text = codes[0].rawValue || '';
         rawEl.value = text;
-        setStatus(`✅ QR scanned
-Characters: ${text.length}`);
+        setStatus(`✅ QR scanned\nCharacters: ${text.length}`);
         stopScan();
         return;
       }
-    } catch (e) {
+    } catch {
       setStatus('❌ Scan error');
     }
     rafId = requestAnimationFrame(loop);
