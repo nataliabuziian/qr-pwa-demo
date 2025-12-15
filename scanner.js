@@ -1,6 +1,6 @@
 const video = document.getElementById('video');
 const statusEl = document.getElementById('status');
-const rawText = document.getElementById('rawText');
+const rawEl = document.getElementById('raw');
 const imgEl = document.getElementById('img');
 const downloadEl = document.getElementById('download');
 
@@ -23,15 +23,15 @@ function base64ToBlob(base64, mime) {
   const clean = base64.replace(/\s+/g, '');
   const bin = atob(clean);
   const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  for (let i = 0; i < bin.length; i++) {
+    bytes[i] = bin.charCodeAt(i);
+  }
   return new Blob([bytes], { type: mime });
 }
 
-function decodeFromTextarea() {
-  const text = rawText.value.trim();
-
+function decodeImageFromText(text) {
   if (!isLikelyBase64(text)) {
-    setStatus('❌ Text does not look like base64.');
+    setStatus('❌ This is not base64 image data.');
     return;
   }
 
@@ -39,17 +39,17 @@ function decodeFromTextarea() {
   const url = URL.createObjectURL(blob);
 
   imgEl.src = url;
+  imgEl.style.display = 'block';
+
   downloadEl.href = url;
   downloadEl.style.display = 'inline';
 
-  setStatus(`✅ Image decoded
-Bytes: ${blob.size}
-Type: ${blob.type}`);
+  setStatus(`✅ Image decoded\nBytes: ${blob.size}\nType: ${blob.type}`);
 }
 
 async function startScan() {
   if (!('BarcodeDetector' in window)) {
-    setStatus('❌ BarcodeDetector not supported. Use manual paste.');
+    setStatus('❌ BarcodeDetector not supported. Use Chrome / Edge.');
     return;
   }
 
@@ -66,14 +66,15 @@ async function startScan() {
   btnStart.disabled = true;
   btnStop.disabled = false;
 
-  setStatus('📷 Scanning QR…');
+  setStatus('📷 Scanning...');
 
   const loop = async () => {
     const codes = await detector.detect(video);
     if (codes.length > 0) {
-      rawText.value = codes[0].rawValue || '';
       await stopScan();
-      setStatus('✅ QR scanned. Content shown below.');
+      const text = codes[0].rawValue || '';
+      rawEl.value = text;
+      setStatus(`✅ QR scanned\nCharacters: ${text.length}`);
       return;
     }
     rafId = requestAnimationFrame(loop);
@@ -98,4 +99,7 @@ async function stopScan() {
 
 btnStart.onclick = startScan;
 btnStop.onclick = stopScan;
-btnDecode.onclick = decodeFromTextarea;
+
+btnDecode.onclick = () => {
+  decodeImageFromText(rawEl.value.trim());
+};
