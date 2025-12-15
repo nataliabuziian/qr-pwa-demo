@@ -37,7 +37,7 @@
     }
 
     #img {
-      max-width: 220px; /* ⬅️ уменьшили фото */
+      max-width: 220px;
       margin-top: 12px;
       border-radius: 6px;
       border: 1px solid #ccc;
@@ -47,16 +47,15 @@
     #download {
       display: none;
       margin-top: 6px;
-      display: inline-block;
-    }
-
-    .box {
-      max-width: 420px;
     }
 
     #status {
       margin-top: 10px;
       white-space: pre-wrap;
+    }
+
+    .box {
+      max-width: 420px;
     }
   </style>
 </head>
@@ -73,22 +72,4 @@
 
   <p id="status">Ready.</p>
 
-  <h3>QR content (RAW)</h3>
-  <textarea id="raw" readonly placeholder="Scanned QR text will appear here..."></textarea>
-
-  <button id="btnDecode">Decode image from text</button>
-
-  <img id="img" alt="Decoded image" />
-  <br>
-  <a id="download" download="photo.avif">Download image</a>
-</div>
-
-<script src="./scanner.js"></script>
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./service-worker.js');
-  }
-</script>
-
-</body>
-</html>
+  <h3>QR content (RAW)</h3
