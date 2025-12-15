@@ -15,13 +15,15 @@ function setStatus(msg) {
   statusEl.textContent = msg;
 }
 
-function isLikelyBase64(text) {
-  return /^[A-Za-z0-9+/=\s]+$/.test(text) && text.length > 200;
+/* 🔑 ГЛАВНЫЙ ФИКС */
+function normalizeBase64(text) {
+  return text
+    .replace(/[^A-Za-z0-9+/=]/g, '')  // ❗ УБИРАЕМ ВЕСЬ МУСОР
+    .trim();
 }
 
 function base64ToBlob(base64, mime) {
-  const clean = base64.replace(/\s+/g, '');
-  const bin = atob(clean);
+  const bin = atob(base64);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) {
     bytes[i] = bin.charCodeAt(i);
@@ -30,13 +32,15 @@ function base64ToBlob(base64, mime) {
 }
 
 function decodeImageFromText(text) {
-  if (!isLikelyBase64(text)) {
-    setStatus('❌ This text does not look like base64 image data.');
+  const clean = normalizeBase64(text);
+
+  if (clean.length < 200) {
+    setStatus('❌ Not enough data for image');
     return;
   }
 
   try {
-    const blob = base64ToBlob(text, 'image/avif');
+    const blob = base64ToBlob(clean, 'image/avif');
     const url = URL.createObjectURL(blob);
 
     imgEl.src = url;
@@ -49,13 +53,13 @@ function decodeImageFromText(text) {
 Bytes: ${blob.size}
 Type: ${blob.type}`);
   } catch (e) {
-    setStatus('❌ Decode error: ' + e.message);
+    setStatus('❌ Decode failed');
   }
 }
 
 async function startScan() {
   if (!('BarcodeDetector' in window)) {
-    setStatus('❌ BarcodeDetector not supported in this browser.');
+    setStatus('❌ BarcodeDetector not supported in this browser');
     return;
   }
 
@@ -72,7 +76,7 @@ async function startScan() {
   btnStart.disabled = true;
   btnStop.disabled = false;
 
-  setStatus('📷 Scanning...');
+  setStatus('📷 Scanning…');
 
   const loop = async () => {
     try {
@@ -110,4 +114,4 @@ function stopScan() {
 
 btnStart.onclick = startScan;
 btnStop.onclick = stopScan;
-btnDecode.onclick = () => decodeImageFromText(rawEl.value.trim());
+btnDecode.onclick = () => decodeImageFromText(rawEl.value);
