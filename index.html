@@ -3,38 +3,46 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Offline QR → Image</title>
+  <title>Offline QR Viewer</title>
+
   <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#ffffff">
+
   <style>
     body { font-family: system-ui, Arial; margin: 16px; }
     button { padding: 10px 14px; margin-right: 8px; }
     #video { width: 100%; max-width: 520px; border: 1px solid #ccc; border-radius: 8px; }
-    #status { margin: 10px 0; white-space: pre-wrap; }
-    #img { max-width: 100%; border: 1px solid #ccc; border-radius: 8px; margin-top: 12px; }
-    textarea { width: 100%; max-width: 520px; height: 140px; }
+    textarea { width: 100%; max-width: 520px; height: 160px; font-family: monospace; }
+    #img { max-width: 100%; margin-top: 12px; border: 1px solid #ccc; border-radius: 8px; }
     .box { max-width: 520px; }
+    .muted { color: #555; font-size: 0.9em; }
   </style>
 </head>
+
 <body>
-  <h2>Scan QR to receive image (offline)</h2>
+  <h2>Scan QR (offline viewer)</h2>
 
   <div class="box">
     <button id="btnStart">Start scan</button>
     <button id="btnStop" disabled>Stop</button>
   </div>
 
-  <p id="status">Ready.</p>
+  <p id="status" class="muted">Ready.</p>
 
   <video id="video" playsinline muted></video>
 
-  <h3>Fallback (if camera can’t read this dense QR)</h3>
-  <p>Paste QR text here (from any normal QR scanner that shows the text) and press “Decode”.</p>
-  <textarea id="paste" placeholder="Paste QR text / base64 here..."></textarea><br/>
-  <button id="btnDecode">Decode pasted text</button>
+  <h3>Scanned QR text (RAW)</h3>
+  <textarea id="qrText" readonly placeholder="Any QR text will appear here"></textarea>
+  <p id="meta" class="muted"></p>
 
-  <div id="result"></div>
-  <img id="img" alt="" />
-  <p><a id="download" style="display:none" download="photo.avif">Download image</a></p>
+  <button id="btnTryDecode">Try decode as image (base64)</button>
+
+  <img id="img" />
+  <p><a id="download" style="display:none" download="image.avif">Download image</a></p>
+
+  <h3>Fallback (manual paste)</h3>
+  <textarea id="paste" placeholder="Paste QR text here..."></textarea><br/>
+  <button id="btnDecodePaste">Use pasted text</button>
 
   <script src="./scanner.js"></script>
   <script>
