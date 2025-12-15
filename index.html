@@ -32,18 +32,14 @@
     textarea {
       width: 100%;
       max-width: 420px;
-      height: 160px;
+      height: 180px;
       font-family: monospace;
       margin-top: 8px;
-
-
       user-select: text;
-      -webkit-user-select: text;
-      -webkit-touch-callout: default;
     }
 
     #img {
-      max-width: 220px;
+      max-width: 200px;
       margin-top: 12px;
       border-radius: 6px;
       border: 1px solid #ccc;
@@ -53,7 +49,6 @@
     #download {
       display: none;
       margin-top: 6px;
-      display: inline-block;
     }
 
     .box {
@@ -77,13 +72,11 @@
 
   <video id="video" playsinline muted></video>
 
-  <p id="status">Ready.</p>
+  <h3>QR content (RAW)</h3>
 
-  <h3>QR content</h3>
-  <textarea
-    id="raw"
-    placeholder="Scanned QR text will appear here or paste manually"
-  ></textarea>
+  <textarea id="raw"
+    placeholder="Scanned QR text will appear here.
+You can also paste or edit text manually."></textarea>
 
   <button id="btnDecode">Decode image from text</button>
 
