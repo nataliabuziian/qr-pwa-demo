@@ -13,19 +13,16 @@
       margin: 16px;
     }
 
-    h2 { margin-top: 0; }
-
     button {
       padding: 10px 14px;
-      margin-right: 8px;
-      margin-top: 6px;
+      margin: 6px 6px 6px 0;
     }
 
     #video {
       width: 100%;
       max-width: 420px;
-      border-radius: 8px;
       border: 1px solid #ccc;
+      border-radius: 8px;
       margin-top: 10px;
     }
 
@@ -35,24 +32,19 @@
       height: 180px;
       font-family: monospace;
       margin-top: 8px;
-      user-select: text;
     }
 
     #img {
-      max-width: 200px;
+      max-width: 220px;
       margin-top: 12px;
-      border-radius: 6px;
       border: 1px solid #ccc;
+      border-radius: 6px;
       display: none;
     }
 
     #download {
       display: none;
-      margin-top: 6px;
-    }
-
-    .box {
-      max-width: 420px;
+      margin-top: 8px;
     }
 
     #status {
@@ -66,24 +58,23 @@
 
 <h2>Scan</h2>
 
-<div class="box">
-  <button id="btnStart">Start scan</button>
-  <button id="btnStop" disabled>Stop</button>
+<button id="btnStart">Start scan</button>
+<button id="btnStop" disabled>Stop</button>
 
-  <video id="video" playsinline muted></video>
+<video id="video" playsinline muted></video>
 
-  <h3>QR content (RAW)</h3>
+<p id="status">Ready.</p>
 
-  <textarea id="raw"
-    placeholder="Scanned QR text will appear here.
-You can also paste or edit text manually."></textarea>
+<h3>QR content (RAW)</h3>
+<textarea id="raw"
+  placeholder="QR text will appear here.
+You can paste or edit text manually."></textarea>
 
-  <button id="btnDecode">Decode image from text</button>
+<button id="btnDecode">Decode image from text</button>
 
-  <img id="img" alt="Decoded image" />
-  <br>
-  <a id="download" download="photo.avif">Download image</a>
-</div>
+<img id="img" alt="Decoded image" />
+<br>
+<a id="download" download="photo.avif">Download image</a>
 
 <script src="./scanner.js"></script>
 <script>
