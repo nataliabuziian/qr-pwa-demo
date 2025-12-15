@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>QR Image Receiver</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 16px; }
+    video { width: 100%; max-width: 400px; border: 1px solid #ccc; }
+    img { max-width: 100%; margin-top: 16px; }
+    .status { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<h2>Scan QR to receive image</h2>
+
+<video id="video" autoplay></video>
+<div class="status" id="status">Waiting for QR…</div>
+<img id="result" />
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="scanner.js"></script>
+
+</body>
+</html>
