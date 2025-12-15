@@ -1,4 +1,4 @@
-const CACHE = 'offline-qr-v1';
+const CACHE = 'qr-offline-v1';
 
 self.addEventListener('install', e => {
   e.waitUntil(
