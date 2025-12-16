@@ -3,19 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Scan</title>
+  <title>Multi QR Image Scanner</title>
 
   <link rel="manifest" href="./manifest.json">
 
   <style>
     body {
-      font-family: system-ui, Arial;
+      font-family: system-ui, Arial, sans-serif;
       margin: 16px;
-    }
-
-    button {
-      padding: 10px 14px;
-      margin: 6px 6px 6px 0;
+      background: #fafafa;
+      padding-bottom: 100px;
     }
 
     #video {
@@ -24,59 +21,87 @@
       border: 1px solid #ccc;
       border-radius: 8px;
       margin-top: 10px;
+      background: #000;
+      transition: opacity 0.3s ease;
     }
 
     textarea {
       width: 100%;
       max-width: 420px;
-      height: 180px;
+      height: 160px;
       font-family: monospace;
       margin-top: 8px;
+      padding: 6px;
     }
 
     #img {
-      max-width: 220px;
+      max-width: 100%;
       margin-top: 12px;
       border: 1px solid #ccc;
-      border-radius: 6px;
       display: none;
     }
 
     #download {
       display: none;
-      margin-top: 8px;
+      margin-top: 10px;
+      font-size: 16px;
     }
 
     #status {
       margin-top: 10px;
-      white-space: pre-wrap;
+      font-size: 14px;
+    }
+
+    /* фиксированная нижняя панель */
+    #controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border-top: 1px solid #ccc;
+      padding: 10px;
+      display: flex;
+      justify-content: space-around;
+      z-index: 1000;
+    }
+
+    #controls button {
+      padding: 12px 18px;
+      font-size: 15px;
     }
   </style>
 </head>
 
 <body>
 
-<h2>Scan QR</h2>
+<h2>📦 Multi-QR Image Scanner</h2>
 
-<button id="btnStart">Start scan</button>
-<button id="btnStop" disabled>Stop</button>
-
-<video id="video" playsinline muted></video>
+<video id="video" playsinline muted webkit-playsinline></video>
 
 <p id="status">Ready.</p>
 
-<h3>QR content (RAW)</h3>
+<h3>Base64 (auto or manual)</h3>
 <textarea id="raw"
-  placeholder="QR text will appear here.
-You can paste or edit text manually."></textarea>
+  placeholder="Scan QR codes OR paste full Base64 here manually">
+</textarea>
 
-<button id="btnDecode">Decode image from text</button>
+<button id="btnDecodeText">Decode image from text</button>
 
 <img id="img" alt="Decoded image" />
 <br>
-<a id="download" download="photo.avif">Download image</a>
+<a id="download" download="photo.avif">⬇️ Download image</a>
 
+
+<div id="controls">
+  <button id="btnStart">Start</button>
+  <button id="btnStop" disabled>Stop</button>
+  <button id="btnReset">Reset</button>
+</div>
+
+<script src="./jsQR.js"></script>
 <script src="./scanner.js"></script>
+
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./service-worker.js');
@@ -85,4 +110,3 @@ You can paste or edit text manually."></textarea>
 
 </body>
 </html>
-
