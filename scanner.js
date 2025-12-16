@@ -7,7 +7,7 @@ const downloadEl = document.getElementById('download');
 const btnStart = document.getElementById('btnStart');
 const btnStop = document.getElementById('btnStop');
 const btnReset = document.getElementById('btnReset');
-const btnDecode = document.getElementById('btnDecode');
+const btnDecodeText = document.getElementById('btnDecodeText');
 
 let stream = null;
 let rafId = null;
@@ -15,7 +15,7 @@ let rafId = null;
 const qrParts = {};
 let expectedTotal = null;
 
-/* ===== helpers ===== */
+/* helpers */
 
 function setStatus(msg) {
   statusEl.textContent = msg;
@@ -27,7 +27,7 @@ function resetAll() {
   rawEl.value = '';
   imgEl.style.display = 'none';
   downloadEl.style.display = 'none';
-  setStatus('Reset done.');
+  setStatus('Reset.');
 }
 
 function normalizeBase64(text) {
@@ -43,10 +43,14 @@ function base64ToBlob(base64, mime) {
   return new Blob([bytes], { type: mime });
 }
 
-/* ===== scan ===== */
+/* scanning */
 
 async function startScan() {
   resetAll();
+
+
+  video.style.display = 'block';
+  video.style.opacity = '1';
 
   stream = await navigator.mediaDevices.getUserMedia({
     video: { facingMode: 'environment' }
@@ -64,12 +68,24 @@ async function startScan() {
 
 function stopScan() {
   cancelAnimationFrame(rafId);
-  if (stream) stream.getTracks().forEach(t => t.stop());
+
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+
+  // скрыть сканер
+  video.style.opacity = '0';
+  setTimeout(() => {
+    video.style.display = 'none';
+  }, 300);
 
   btnStart.disabled = false;
   btnStop.disabled = true;
 
-  setStatus('Scan stopped');
+  setStatus('Stopped. Decoding image…');
+
+  decodeFromParts();
 }
 
 function scanLoop() {
@@ -93,7 +109,7 @@ function scanLoop() {
   rafId = requestAnimationFrame(scanLoop);
 }
 
-/* ===== QR logic ===== */
+/* QR handling */
 
 function handleQr(text) {
   let obj;
@@ -114,41 +130,51 @@ function handleQr(text) {
 
   qrParts[obj.part] = obj.data;
 
-  const count = Object.keys(qrParts).length;
-  setStatus(`Scanned ${count} / ${expectedTotal}`);
-  rawEl.value = JSON.stringify(qrParts, null, 2);
-
-  // авто-декод когда все части собраны
-  if (count === expectedTotal) {
-    decodeImage();
-  }
+  setStatus(`Scanned ${Object.keys(qrParts).length} / ${expectedTotal}`);
+  rawEl.value = Object.values(qrParts).join('');
 }
 
-/* ===== decode ===== */
+/* decode modes */
 
-function decodeImage() {
-  if (!expectedTotal) return;
-
-  let fullBase64 = '';
-  for (let i = 1; i <= expectedTotal; i++) {
-    if (!qrParts[i]) return;
-    fullBase64 += qrParts[i];
+function decodeFromParts() {
+  if (!expectedTotal) {
+    setStatus('No QR data');
+    return;
   }
 
-  fullBase64 = normalizeBase64(fullBase64);
+  let full = '';
+  for (let i = 1; i <= expectedTotal; i++) {
+    if (!qrParts[i]) {
+      setStatus(`Missing part ${i}`);
+      return;
+    }
+    full += qrParts[i];
+  }
 
-  console.log('FULL BASE64 LENGTH:', fullBase64.length);
+  decodeBase64(full);
+}
 
-  // Android Chrome AVIF поддерживает
-  const blob = base64ToBlob(fullBase64, 'image/avif');
+function decodeFromText() {
+  const text = rawEl.value.trim();
+  if (!text) {
+    setStatus('Textarea empty');
+    return;
+  }
+  decodeBase64(text);
+}
+
+function decodeBase64(base64) {
+  const clean = normalizeBase64(base64);
+
+  let blob;
+  try {
+    blob = base64ToBlob(clean, 'image/avif');
+  } catch {
+    setStatus('Invalid base64');
+    return;
+  }
+
   const url = URL.createObjectURL(blob);
-
-  imgEl.onload = () => {
-    console.log('Image loaded');
-  };
-  imgEl.onerror = e => {
-    console.error('Image load error', e);
-  };
 
   imgEl.src = url;
   imgEl.style.display = 'block';
@@ -157,12 +183,14 @@ function decodeImage() {
   downloadEl.download = 'photo.avif';
   downloadEl.style.display = 'inline-block';
 
-  setStatus('Image decoded successfully ✅');
+  imgEl.scrollIntoView({ behavior: 'smooth' });
+
+  setStatus('Image decoded ✅');
 }
 
-/* ===== buttons ===== */
+/* buttons */
 
 btnStart.onclick = startScan;
 btnStop.onclick = stopScan;
 btnReset.onclick = resetAll;
-btnDecode.onclick = decodeImage;
+btnDecodeText.onclick = decodeFromText;
