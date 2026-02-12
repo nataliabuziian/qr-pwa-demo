@@ -1,9 +1,10 @@
+<!-- index.html -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>QR Image Scanner</title>
+  <title>QR Photo Scanner</title>
 
   <link rel="manifest" href="./manifest.json">
 
@@ -12,7 +13,7 @@
       font-family: system-ui, Arial, sans-serif;
       margin: 16px;
       background: #fafafa;
-      padding-bottom: 100px;
+      padding-bottom: 110px;
     }
 
     #video {
@@ -22,7 +23,8 @@
       border-radius: 8px;
       margin-top: 10px;
       background: #000;
-      transition: opacity 0.3s ease;
+      transition: opacity 0.2s ease;
+      display: none;
     }
 
     textarea {
@@ -50,9 +52,9 @@
     #status {
       margin-top: 10px;
       font-size: 14px;
+      white-space: pre-wrap;
     }
 
-    /* фиксированная нижняя панель */
     #controls {
       position: fixed;
       bottom: 0;
@@ -63,6 +65,7 @@
       padding: 10px;
       display: flex;
       justify-content: space-around;
+      gap: 8px;
       z-index: 1000;
     }
 
@@ -75,16 +78,14 @@
 
 <body>
 
-<h2>📦QR Image Scanner</h2>
+<h2>📷 QR Photo Scanner</h2>
 
 <video id="video" playsinline muted webkit-playsinline></video>
 
 <p id="status">Ready.</p>
 
-<h3>Base64 (auto or manual)</h3>
-<textarea id="raw"
-  placeholder="Scan QR codes OR paste full Base64 here manually">
-</textarea>
+<h3>QR content (RAW)</h3>
+<textarea id="raw" placeholder="Scan QR OR paste Base64 here manually"></textarea>
 
 <button id="btnDecodeText">Decode image from text</button>
 
@@ -92,23 +93,21 @@
 <br>
 <a id="download" download="photo.avif">⬇️ Download image</a>
 
-
 <div id="controls">
   <button id="btnStart">Start</button>
   <button id="btnStop" disabled>Stop</button>
   <button id="btnReset">Reset</button>
 </div>
 
-<script src="./jsQR.js"></script>
+<!-- IMPORTANT: jsQR from CDN (no local jsQR.js needed) -->
+<script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
 <script src="./scanner.js"></script>
 
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./service-worker.js');
+    navigator.serviceWorker.register('./service-worker.js').catch(console.error);
   }
 </script>
 
 </body>
 </html>
-
-
